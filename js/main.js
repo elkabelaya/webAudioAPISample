@@ -1,14 +1,11 @@
-/******************************************************
- * Copyright 2014 by Abaddon <abaddongit@gmail.com>
- * @author Abaddon <abaddongit@gmail.com>
- * @version 0.0.1
- * ***************************************************/
 var arrRes =new Array(10);
+var lastValues=new Array(3);
 var w = window,
     d = document,
     SMOOTHING = 0.3,
-    FURIE = 512; //цвета частиц
+    FURIE = 512;
 
+var elements = [];
 
     var WoolAnalaser = function () {
         "use strict";
@@ -77,7 +74,12 @@ var w = window,
         this.init = function () {
 
             var audio = null;
+          /*  var interval = setInterval(()=>{
+                elements.forEach((item, i) => {
+                  size = item.width -
+                });
 
+            });*/
             try {
                 audio = new Analyse();
                 d.body.appendChild(audio.audio);
@@ -103,13 +105,34 @@ var w = window,
                   }
                   var element = document.getElementsByClassName('el')[0];
                   function step(timestamp) {
-                    var size = `${Math.max(...arrRes) *20}px`
-                    var position = `${150 + Math.max(...arrRes) *100}px`
-                    element.style.width = size;
-                    element.style.height = size;
-                    element.style.borderRadius = size;
-                    element.style.left = position;
-                    element.style.top = position;
+                    var value = Math.max(...arrRes);
+                    function getAvg(grades) {
+                      const total = grades.reduce((acc, c) => acc + c, 0);
+                      return total / grades.length;
+                    }
+
+                    const average = getAvg(lastValues);
+                    if (value > average + 0.1){
+                        var size = `${Math.max(...arrRes) *40}px`;
+
+                        var positionX = `${150 + Math.abs(bands[Math.round(Math.random()*255)])*1000}px`;
+                        var positionY = `${150 + Math.abs(bands[Math.round(Math.random()*255)])*1000}px`;
+                        console.log(positionX, positionY);
+                        let element = d.createElement("div");
+                        element.classList.add("el");
+                        element.style.width = size;
+                        element.style.height = size;
+                        element.style.borderRadius = size;
+
+                        element.style.left = positionX;
+                        element.style.top = positionY;
+                        element.textContent = Math.floor(Math.max(...arrRes)*10);
+                        element.weight = 10 - Math.floor(Math.max(...arrRes)*10);
+                        d.body.appendChild(element);
+                    }
+                    lastValues.push(value);
+                    lastValues.shift();
+
                   }
 
                   window.requestAnimationFrame(step);
