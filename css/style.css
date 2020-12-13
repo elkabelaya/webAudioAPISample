@@ -18,17 +18,15 @@ audio {
   background-color:red;
 }
 
-#song {
+.song {
     position: absolute;
     top: 90px;
     left: 20px;
 }
 
-#target {
-	width: 100%;
-	height: 100%;
-}
-
-canvas {
-	display: block;
+.game-field {
+  position: absolute;
+	width: 500px;
+	height: 500px;
+  border: solid 1px;
 }

@@ -7,169 +7,194 @@ var w = window,
 
 var elements = [];
 
-    var WoolAnalaser = function () {
-        "use strict";
-        var ctx = null,
-        canva = null,
-        config = null,
-        particles = [],
-        rope = null,
-        birds = [],
-        audio = null,
-        freeSpace = w.innerWidth,
-        input = d.querySelector('#song'),
-        that = this;
+class GameBall {
+  constructor(size, x, y){
+    this.element = d.createElement("div");
+    this.element.classList.add("el");
+    this.weight = size;
 
+    this.size = size*4;
+    this.position = [x, y];
+  }
 
-        config = this.config = {
-            fullscreen: true,
-            interval: 10,
-            type: "canvas"
-        };
-        /*
-        * Конструктор анализатора
-        */
-        var Analyse = function () {
-            var _that = this,
-            AudioContext = w.AudioContext || w.webkitAudioContext;
-            document.getElementsByClassName("button")[0].addEventListener('click', function() {
-              _that.context.resume().then(() => {
-                console.log('Playback resumed successfully');
-              });
-            });
-            this.audio = new Audio();
-            this.audio.controls = true;
+  set position([x,y]){
+    const style = this.element.style;
+    style.left = addPX(x);
+    style.top = addPX(y);
+  }
 
-            this.context = new AudioContext();
-            this.node = this.context.createScriptProcessor(2048, 1, 1);
-            //Анализатор
-            this.analyser = this.context.createAnalyser();
-            this.analyser.smoothingTimeConstant = SMOOTHING;
-            this.analyser.fftSize = FURIE;
+  get position(){
+    const style = this.element.style;
+    return [getPX(style.left),getPX(style.top)];
+  }
 
-            this.bands = new Float32Array(this.analyser.fftSize);//new Uint8Array(this.analyser.frequencyBinCount);
+  get size(){
+    return getPX(this.element.style.width);
+  }
 
-            this.audio.addEventListener('canplay', function () {
-                if (!_that.source) {
-                    _that.source = _that.context.createMediaElementSource(_that.audio);
+  set size(size){
+    size = Math.floor(size);
+    if (size<0){
+      size = 0;
+    }
+    const style = this.element.style;
+    const sizePx = addPX(size);
+    this.element.textContent = size;
+    style.width = sizePx;
+    style.height = sizePx;
+    style.borderRadius = sizePx;
+  }
+}
 
-                    _that.source.connect(_that.analyser);
-                    _that.analyser.connect(_that.node);
-                    _that.node.connect(_that.context.destination);
-                    _that.source.connect(_that.context.destination);
+class GameCoordinates{
+  constructor(gameField){
+    this.originX = gameField.style.width/2;
+    this.originY = gameField.style.height/2;
+  }
 
-                    _that.node.onaudioprocess = function () {
-                      //  _that.analyser.getByteFrequencyData(_that.bands);
-                       _that.analyser.getFloatTimeDomainData(_that.bands);
-                        if (!_that.audio.paused) {
-                            return typeof _that.update === "function" ? _that.update(_that.bands) : 0;
-                        }
-                    };
-                }
-            });
+  getMoveDirection(x,y){
+    const originX = this.originX;
+    const originY = this.originY;
+    if (x >= originX && y < originY){
+      return [+1, +1];
+    } else if (x >= originX && y >= originY){
+      return [-1, +1];
+    } else if (x < originX && y >= originY){
+      return [-1, -1];
+    } else {
+      return [+1, -1];
+    }
 
-            return this;
-        };
+  }
+}
 
-        this.init = function () {
+class AudioAnaliser  {
+    constructor(){
+      AudioContext = w.AudioContext || w.webkitAudioContext;
+      document.getElementsByClassName("song")[0].addEventListener('click', () => {
+        this.context.resume().then(() => {
+          console.log('Playback resumed successfully');
+        });
+      });
+      this.audio = new Audio();
+      this.audio.controls = true;
 
-            var audio = null;
-            var interval = setInterval(()=>{
+      this.context = new AudioContext();
+      this.node = this.context.createScriptProcessor(2048, 1, 1);
+      //Анализатор
+      this.analyser = this.context.createAnalyser();
+      this.analyser.smoothingTimeConstant = SMOOTHING;
+      this.analyser.fftSize = FURIE;
 
-                elements.forEach((element, i) => {
+      this.bands = new Float32Array(this.analyser.fftSize);//new Uint8Array(this.analyser.frequencyBinCount);
 
-                  let newSize = Math.floor(getPX(element.style.width) -1*element.weight);
+      this.audio.addEventListener('canplay', () => {
+          if (!this.source) {
+              this.source = this.context.createMediaElementSource(this.audio);
 
-                  let size  = `${newSize}px`;
-                  let randomX = Math.random()*10;
-                  let randomY = Math.random()*10;
-                  var positionX = `${getPX(element.style.left) + randomX}px`;
-                  var positionY = `${getPX(element.style.top) + randomY}px`;
+              this.source.connect(this.analyser);
+              this.analyser.connect(this.node);
+              this.node.connect(this.context.destination);
+              this.source.connect(this.context.destination);
 
-                  element.style.width = size;
-                  element.style.height = size;
-                  element.style.borderRadius = size;
-
-                  element.style.left = positionX;
-                  element.style.top = positionY;
-                  element.textContent = newSize;
-                  if (newSize <= 2){
-                    document.body.removeChild(element);
-                    elements = elements.filter(item => item !== element)
+              this.node.onaudioprocess = () => {
+                //  this.analyser.getByteFrequencyData(this.bands);
+                 this.analyser.getFloatTimeDomainData(this.bands);
+                  if (!this.audio.paused) {
+                      return typeof this.update === "function" ? this.update(this.bands) : 0;
                   }
+              };
+          }
+      });
+    }
+};
+
+var WoolAnalaser = function () {
+
+    var
+
+    audio = null,
+
+    input = d.getElementsByClassName('song')[0],
+    that = this;
 
 
-                });
 
-            }, 200);
+    this.init = function () {
 
-            try {
-                audio = new Analyse();
-                d.body.appendChild(audio.audio);
+        var audio = null;
+        var interval = setInterval(()=>{
 
-                input.addEventListener('change', function () {
-                    var song = this.value,
-                        fReader = new FileReader();
+            elements.forEach((element, i) => {
+              const [x, y] = element.position;
+              console.log("element.size - element.weight", element.size,element.weight)
+              element.size = element.size - element.weight;
+              element.position = [x + Math.random()*10, y + Math.random()*10];
+              if (element.size <= 2){
+                document.body.removeChild(element.element);
+                elements = elements.filter(item => item !== element)
+              }
+            });
 
-                    fReader.readAsDataURL(this.files[0]);
-                    fReader.onloadend = function (event) {
-                        var e = event || w.event;
-                        audio.audio.src = e.target.result;
-                        audio.audio.load();
-                    };
-                }, false);
+        }, 200);
 
-                audio.update = function (bands) {
-                  arrRes.push(Math.max(...bands));
-                  arrRes.shift();
 
-                  var element = document.getElementsByClassName('el')[0];
-                  function step(timestamp) {
-                    var value = Math.max(...arrRes);
-                    function getAvg(grades) {
-                      const total = grades.reduce((acc, c) => acc + c, 0);
-                      return total / grades.length;
-                    }
+            audio = new AudioAnaliser();
+            d.body.appendChild(audio.audio);
 
-                    const average = getAvg(lastValues);
-                    if (value > average + 0.1){
-                        var size = `${Math.max(...arrRes) *40}px`;
+            input.addEventListener('change', function () {
+                var song = this.value,
+                    fReader = new FileReader();
 
-                        var positionX = `${150 + Math.abs(bands[0])*1000}px`;
-                        var positionY = `${150 + Math.abs(bands[1])*1000}px`;
-                        console.log(positionX, positionY);
-                        let element = d.createElement("div");
-                        element.classList.add("el");
-                        element.style.width = size;
-                        element.style.height = size;
-                        element.style.borderRadius = size;
-
-                        element.style.left = positionX;
-                        element.style.top = positionY;
-                        element.textContent = Math.floor(Math.max(...arrRes)*10);
-                        element.weight = Math.floor(Math.max(...arrRes)*10);
-                        d.body.appendChild(element);
-                        elements.push(element);
-                    }
-                    lastValues.push(value);
-                    lastValues.shift();
-
-                  }
-
-                  window.requestAnimationFrame(step);
-
+                fReader.readAsDataURL(this.files[0]);
+                fReader.onloadend = function (event) {
+                    var e = event || w.event;
+                    audio.audio.src = e.target.result;
+                    audio.audio.load();
                 };
-            } catch (e) {
-                throw ('Ваш барузер не поддержывает audio Api');
-            }
-            setInterval(that.action, this.config.interval);
-        }
+            }, false);
 
-    };
+            audio.update = function (bands) {
+              arrRes.push(Math.max(...bands));
+              arrRes.shift();
+
+              var element = document.getElementsByClassName('el')[0];
+              function step(timestamp) {
+                var value = Math.max(...arrRes);
+                function getAvg(grades) {
+                  const total = grades.reduce((acc, c) => acc + c, 0);
+                  return total / grades.length;
+                }
+
+                const average = getAvg(lastValues);
+                if (value > average + 0.1){
+                    const gameBall = new GameBall(Math.max(...arrRes)*10,
+                                                  150 + Math.abs(bands[0])*1000,
+                                                  150 + Math.abs(bands[1])*1000
+                                                );
+
+                    d.body.appendChild(gameBall.element);
+                    elements.push(gameBall);
+                }
+                lastValues.push(value);
+                lastValues.shift();
+
+              }
+
+              window.requestAnimationFrame(step);
+
+            };
+
+
+    }
+
+};
+
 
 
 w.onload = function () {
     var analyser = new WoolAnalaser ();
+
     analyser.init(d.querySelector('#target'));
 };
 
