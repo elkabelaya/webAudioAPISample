@@ -1,4 +1,4 @@
 # webAudioAPISample
 experiment with AudioContext
 # how to play:
-open index.html in chrome, select m3u8 file from your computer, then click play on audioplayer. Click red ball to score pointsю 
+open index.html in chrome, select mp3 audio file from your computer, then click play on audioplayer. Click red ball to score points 
