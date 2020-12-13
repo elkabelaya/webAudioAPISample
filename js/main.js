@@ -152,14 +152,14 @@ class AudioGame {
 
             audioAnaliser.update = function (bands) {
               appendValueToArray (arrRes, Math.max(...bands));
-              const value = Math.max(...arrRes);
+              const value = Math.max(...bands);
               const average = getAverage(lastValues);
 
               appendValueToArray (lastValues, value);
 
-              if (value > average + 0.05){
+              if (value > average + 0.1){
 
-                  const gameBall = new GameBall( Math.max(...arrRes)*10,
+                  const gameBall = new GameBall( value*10,
                                                  gameCoordinates.getCoordinates(bands[0],bands[Math.floor(Math.random()*255)]),
                                                  gameCoordinates.getRotateCenter(),
                                                  (weight) => {
