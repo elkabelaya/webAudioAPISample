@@ -74,12 +74,35 @@ var elements = [];
         this.init = function () {
 
             var audio = null;
-          /*  var interval = setInterval(()=>{
-                elements.forEach((item, i) => {
-                  size = item.width -
+            var interval = setInterval(()=>{
+
+                elements.forEach((element, i) => {
+
+                  let newSize = Math.floor(getPX(element.style.width) -1*element.weight);
+
+                  let size  = `${newSize}px`;
+                  let randomX = Math.random()*10;
+                  let randomY = Math.random()*10;
+                  var positionX = `${getPX(element.style.left) + randomX}px`;
+                  var positionY = `${getPX(element.style.top) + randomY}px`;
+
+                  element.style.width = size;
+                  element.style.height = size;
+                  element.style.borderRadius = size;
+
+                  element.style.left = positionX;
+                  element.style.top = positionY;
+                  element.textContent = newSize;
+                  if (newSize <= 2){
+                    document.body.removeChild(element);
+                    elements = elements.filter(item => item !== element)
+                  }
+
+
                 });
 
-            });*/
+            }, 200);
+
             try {
                 audio = new Analyse();
                 d.body.appendChild(audio.audio);
@@ -99,10 +122,7 @@ var elements = [];
                 audio.update = function (bands) {
                   arrRes.push(Math.max(...bands));
                   arrRes.shift();
-                  if ( Math.max(...arrRes) >0.7){
-                    console.log("audio.update", Math.max(...arrRes));
 
-                  }
                   var element = document.getElementsByClassName('el')[0];
                   function step(timestamp) {
                     var value = Math.max(...arrRes);
@@ -115,8 +135,8 @@ var elements = [];
                     if (value > average + 0.1){
                         var size = `${Math.max(...arrRes) *40}px`;
 
-                        var positionX = `${150 + Math.abs(bands[Math.round(Math.random()*255)])*1000}px`;
-                        var positionY = `${150 + Math.abs(bands[Math.round(Math.random()*255)])*1000}px`;
+                        var positionX = `${150 + Math.abs(bands[0])*1000}px`;
+                        var positionY = `${150 + Math.abs(bands[1])*1000}px`;
                         console.log(positionX, positionY);
                         let element = d.createElement("div");
                         element.classList.add("el");
@@ -127,8 +147,9 @@ var elements = [];
                         element.style.left = positionX;
                         element.style.top = positionY;
                         element.textContent = Math.floor(Math.max(...arrRes)*10);
-                        element.weight = 10 - Math.floor(Math.max(...arrRes)*10);
+                        element.weight = Math.floor(Math.max(...arrRes)*10);
                         d.body.appendChild(element);
+                        elements.push(element);
                     }
                     lastValues.push(value);
                     lastValues.shift();
@@ -151,3 +172,11 @@ w.onload = function () {
     var analyser = new WoolAnalaser ();
     analyser.init(d.querySelector('#target'));
 };
+
+const getPX = function (value){
+    return +value.replace("px","");
+}
+
+const addPX = function (value){
+  return value + "px";
+}
