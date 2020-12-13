@@ -13,9 +13,11 @@ audio {
 
 .el {
   position: absolute;
-  top:  150px;
-  left: 20px;
   background-color:red;
+  -webkit-animation-iteration-count:infinite;
+  -webkit-animation-timing-function:linear;
+  -webkit-animation-name:orbit;
+  -webkit-animation-duration:5s;
 }
 
 .song {
@@ -26,7 +28,21 @@ audio {
 
 .game-field {
   position: absolute;
+  overflow: hidden;
+  top: 150px;
 	width: 500px;
 	height: 500px;
-  border: solid 1px;
+
+
+}
+
+
+@-webkit-keyframes orbit {
+  from { -webkit-transform:rotate(0deg) }
+  to { -webkit-transform:rotate(360deg) }
+}
+
+@-webkit-keyframes resize {
+  from { -webkit-transform:rotate(0deg) }
+  to { -webkit-transform:rotate(360deg) }
 }

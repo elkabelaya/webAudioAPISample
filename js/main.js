@@ -8,13 +8,16 @@ var w = window,
 var elements = [];
 
 class GameBall {
-  constructor(size, x, y){
+  constructor(size, [x, y],[rotateX,rotateY]){
     this.element = d.createElement("div");
     this.element.classList.add("el");
     this.weight = size;
 
     this.size = size*4;
     this.position = [x, y];
+    this.element.style.left = addPX(x);
+    this.element.style.top = addPX(y);
+    this.element.style.transformOrigin = `${addPX((rotateX-x)*2)} ${addPX((rotateY-y)*2)}`;
   }
 
   set position([x,y]){
@@ -39,22 +42,24 @@ class GameBall {
     }
     const style = this.element.style;
     const sizePx = addPX(size);
-    this.element.textContent = size;
     style.width = sizePx;
     style.height = sizePx;
     style.borderRadius = sizePx;
+
   }
 }
 
 class GameCoordinates{
   constructor(gameField){
-    this.originX = gameField.style.width/2;
-    this.originY = gameField.style.height/2;
+    this.originX = gameField.clientWidth/2;
+    this.originY = gameField.clientHeight/2;
   }
 
   getMoveDirection(x,y){
+
     const originX = this.originX;
     const originY = this.originY;
+    //console.log("getMoveDirection", x,y, originX, originY);
     if (x >= originX && y < originY){
       return [+1, +1];
     } else if (x >= originX && y >= originY){
@@ -66,18 +71,25 @@ class GameCoordinates{
     }
 
   }
+  getRotateCenter(){
+    return [this.originX, this.originY];
+
+  }
+  getCoordinates(x,y){
+      console.log("getCoordinates", x,y, x*this.originX + this.originX, y*this.originY +this.originY);
+    return [x*this.originX + this.originX, y*this.originY +this.originY ];
+  }
 }
 
 class AudioAnaliser  {
-    constructor(){
+    constructor(audioTag){
       AudioContext = w.AudioContext || w.webkitAudioContext;
       document.getElementsByClassName("song")[0].addEventListener('click', () => {
         this.context.resume().then(() => {
           console.log('Playback resumed successfully');
         });
       });
-      this.audio = new Audio();
-      this.audio.controls = true;
+      this.audio = audioTag;
 
       this.context = new AudioContext();
       this.node = this.context.createScriptProcessor(2048, 1, 1);
@@ -109,38 +121,33 @@ class AudioAnaliser  {
     }
 };
 
-var WoolAnalaser = function () {
+class AudioGame {
 
-    var
+  constructor () {
 
-    audio = null,
+      const input = d.getElementsByClassName('song')[0];
+      const audio = d.getElementsByClassName('audio')[0];
+      const gameField = d.getElementsByClassName('game-field')[0];
+      const audioAnaliser = new AudioAnaliser(audio);
+      const gameCoordinates = new GameCoordinates(gameField);
 
-    input = d.getElementsByClassName('song')[0],
-    that = this;
+      const interval = setInterval(()=>{
 
+          elements.forEach((element, i) => {
+            const [x, y] = element.position;
+            const [directionX, directionY] = gameCoordinates.getMoveDirection(x, y);
 
+            //console.log("element.size - element.weight", element.size,element.weight)
+            element.size = element.size - element.weight;
+            //element.position = [x + directionX*Math.random()*10, y + directionY*Math.random()*10];
+            if (element.size <= 2){
+              gameField.removeChild(element.element);
+              elements = elements.filter(item => item !== element)
+            }
+          });
 
-    this.init = function () {
+      }, 200);
 
-        var audio = null;
-        var interval = setInterval(()=>{
-
-            elements.forEach((element, i) => {
-              const [x, y] = element.position;
-              console.log("element.size - element.weight", element.size,element.weight)
-              element.size = element.size - element.weight;
-              element.position = [x + Math.random()*10, y + Math.random()*10];
-              if (element.size <= 2){
-                document.body.removeChild(element.element);
-                elements = elements.filter(item => item !== element)
-              }
-            });
-
-        }, 200);
-
-
-            audio = new AudioAnaliser();
-            d.body.appendChild(audio.audio);
 
             input.addEventListener('change', function () {
                 var song = this.value,
@@ -149,39 +156,31 @@ var WoolAnalaser = function () {
                 fReader.readAsDataURL(this.files[0]);
                 fReader.onloadend = function (event) {
                     var e = event || w.event;
-                    audio.audio.src = e.target.result;
-                    audio.audio.load();
+                    audio.src = e.target.result;
+                    audio.load();
                 };
             }, false);
 
-            audio.update = function (bands) {
-              arrRes.push(Math.max(...bands));
-              arrRes.shift();
+            audioAnaliser.update = function (bands) {
+              appendValueToArray (arrRes, Math.max(...bands));
+              const value = Math.max(...arrRes);
+              const average = getAverage(lastValues);
 
-              var element = document.getElementsByClassName('el')[0];
-              function step(timestamp) {
-                var value = Math.max(...arrRes);
-                function getAvg(grades) {
-                  const total = grades.reduce((acc, c) => acc + c, 0);
-                  return total / grades.length;
-                }
+              appendValueToArray (lastValues, value);
 
-                const average = getAvg(lastValues);
-                if (value > average + 0.1){
-                    const gameBall = new GameBall(Math.max(...arrRes)*10,
-                                                  150 + Math.abs(bands[0])*1000,
-                                                  150 + Math.abs(bands[1])*1000
+              if (value > average + 0.05){
+
+                  const gameBall = new GameBall( Math.max(...arrRes)*10,
+                                                 gameCoordinates.getCoordinates(bands[0],bands[Math.floor(Math.random()*255)]),
+                                                 gameCoordinates.getRotateCenter()
                                                 );
+                  elements.push(gameBall);
 
-                    d.body.appendChild(gameBall.element);
-                    elements.push(gameBall);
-                }
-                lastValues.push(value);
-                lastValues.shift();
-
+                  window.requestAnimationFrame(()=>{
+                    gameField.appendChild(gameBall.element)
+                  });
               }
 
-              window.requestAnimationFrame(step);
 
             };
 
@@ -193,9 +192,8 @@ var WoolAnalaser = function () {
 
 
 w.onload = function () {
-    var analyser = new WoolAnalaser ();
+    const game = new AudioGame();
 
-    analyser.init(d.querySelector('#target'));
 };
 
 const getPX = function (value){
@@ -204,4 +202,14 @@ const getPX = function (value){
 
 const addPX = function (value){
   return value + "px";
+}
+
+const getAverage = function (values) {
+  const total = values.reduce((acc, c) => acc + c, 0);
+  return total / values.length;
+}
+
+const appendValueToArray = function (array, value){
+  array.push(value);
+  array.shift();
 }
