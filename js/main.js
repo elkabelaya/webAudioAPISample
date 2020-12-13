@@ -8,15 +8,23 @@ var w = window,
 var elements = [];
 
 class GameBall {
-  constructor(size, [x, y],[rotateX,rotateY]){
+  constructor(size, [x, y],[rotateX,rotateY], handler){
     this.element = d.createElement("div");
     this.element.classList.add("el");
+    this.element.addEventListener('click', ()=>{
+      this.element.style.visibility = "hidden";
+      handler(this.weight);
+    });
     this.weight = size;
 
-    this.size = size*4;
+    this._size = size = size*4;
     this.position = [x, y];
-    this.element.style.left = addPX(x);
-    this.element.style.top = addPX(y);
+    const style = this.element.style;
+    style.left = addPX(x);
+    style.top = addPX(y);
+    style.width = addPX(size);
+    style.height = addPX(size);
+    style.borderRadius = addPX(size);
     this.element.style.transformOrigin = `${addPX((rotateX-x)*2)} ${addPX((rotateY-y)*2)}`;
   }
 
@@ -32,7 +40,7 @@ class GameBall {
   }
 
   get size(){
-    return getPX(this.element.style.width);
+    return this._size;
   }
 
   set size(size){
@@ -40,11 +48,10 @@ class GameBall {
     if (size<0){
       size = 0;
     }
+    this._size = size;
     const style = this.element.style;
     const sizePx = addPX(size);
-    style.width = sizePx;
-    style.height = sizePx;
-    style.borderRadius = sizePx;
+    style.transform = `-webkit-transform: scale(${addPX(size/this.weigh)});`;
 
   }
 }
@@ -55,28 +62,11 @@ class GameCoordinates{
     this.originY = gameField.clientHeight/2;
   }
 
-  getMoveDirection(x,y){
-
-    const originX = this.originX;
-    const originY = this.originY;
-    //console.log("getMoveDirection", x,y, originX, originY);
-    if (x >= originX && y < originY){
-      return [+1, +1];
-    } else if (x >= originX && y >= originY){
-      return [-1, +1];
-    } else if (x < originX && y >= originY){
-      return [-1, -1];
-    } else {
-      return [+1, -1];
-    }
-
-  }
   getRotateCenter(){
     return [this.originX, this.originY];
 
   }
   getCoordinates(x,y){
-      console.log("getCoordinates", x,y, x*this.originX + this.originX, y*this.originY +this.originY);
     return [x*this.originX + this.originX, y*this.originY +this.originY ];
   }
 }
@@ -127,6 +117,7 @@ class AudioGame {
 
       const input = d.getElementsByClassName('song')[0];
       const audio = d.getElementsByClassName('audio')[0];
+      const result = d.getElementsByClassName('result')[0];
       const gameField = d.getElementsByClassName('game-field')[0];
       const audioAnaliser = new AudioAnaliser(audio);
       const gameCoordinates = new GameCoordinates(gameField);
@@ -134,19 +125,17 @@ class AudioGame {
       const interval = setInterval(()=>{
 
           elements.forEach((element, i) => {
-            const [x, y] = element.position;
-            const [directionX, directionY] = gameCoordinates.getMoveDirection(x, y);
+             window.requestAnimationFrame(()=>{
+              element.size = element.size - element.weight;
+            })
 
-            //console.log("element.size - element.weight", element.size,element.weight)
-            element.size = element.size - element.weight;
-            //element.position = [x + directionX*Math.random()*10, y + directionY*Math.random()*10];
             if (element.size <= 2){
               gameField.removeChild(element.element);
               elements = elements.filter(item => item !== element)
             }
           });
 
-      }, 200);
+      }, 500);
 
 
             input.addEventListener('change', function () {
@@ -172,7 +161,11 @@ class AudioGame {
 
                   const gameBall = new GameBall( Math.max(...arrRes)*10,
                                                  gameCoordinates.getCoordinates(bands[0],bands[Math.floor(Math.random()*255)]),
-                                                 gameCoordinates.getRotateCenter()
+                                                 gameCoordinates.getRotateCenter(),
+                                                 (weight) => {
+                                                   console.log(result.innerHTML,weight)
+                                                   result.textContent = +result.innerHTML + weight;
+                                                 }
                                                 );
                   elements.push(gameBall);
 

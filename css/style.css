@@ -13,16 +13,30 @@ audio {
 
 .el {
   position: absolute;
-  background-color:red;
+    background-color:red;
   -webkit-animation-iteration-count:infinite;
   -webkit-animation-timing-function:linear;
   -webkit-animation-name:orbit;
   -webkit-animation-duration:5s;
 }
 
+.el-inner {
+  position: absolute;
+  background-color:red;
+  -webkit-animation-iteration-count:infinite;
+  -webkit-animation-timing-function:linear;
+  -webkit-animation-name:resize;
+  -webkit-animation-duration:50s;
+}
+
 .song {
     position: absolute;
     top: 90px;
+    left: 20px;
+}
+.result {
+    position: absolute;
+    top: 130px;
     left: 20px;
 }
 
@@ -43,6 +57,6 @@ audio {
 }
 
 @-webkit-keyframes resize {
-  from { -webkit-transform:rotate(0deg) }
-  to { -webkit-transform:rotate(360deg) }
+  from { -webkit-transform:scale(1) }
+  to { -webkit-transform:scale(0) }
 }
